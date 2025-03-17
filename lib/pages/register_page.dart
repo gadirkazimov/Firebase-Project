@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmedPasswordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _ageController = TextEditingController();
+
 
   @override
   void dispose() {
@@ -22,6 +27,10 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmedPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _ageController.dispose();
+
   }
 
   bool passwordConfirmed() {
@@ -32,32 +41,67 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  Future signUp() async {
-    if(passwordConfirmed()) {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(email: _emailController.text.trim(), password: _passwordController.text.trim());
-    } else {
-      showErrorDialog(context, "Passwords do not match. Please try again.");
+  Future addUserDetails(String uid, String firstName, String lastName, String email, String age) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'first_name': firstName,
+        'last_name': lastName,
+        'email': email,
+        'age': age
+      });
+      print("User data added to Firestore successfully!");
+    } catch (e) {
+      print("🔥 Firestore Error: $e");
     }
   }
 
 
-  void showErrorDialog (BuildContext context, String message) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context){
-          return AlertDialog (
-            title: Text("Sign Up Error"),
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text("OK"),
-              ),
-            ],
-          );
-        }
+  Future signUp() async {
+    if (!passwordConfirmed()) {
+      showErrorSnackbar(context); // Show an error message if passwords don't match
+      return;
+    }
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      String uid = userCredential.user!.uid;
+
+      print("User registered with UID: $uid");
+
+      await addUserDetails(uid, _firstNameController.text.trim(), _lastNameController.text.trim(), _emailController.text.trim(), _ageController.text.trim());
+
+      print("User data added to Firestore successfully!");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration success!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+
+    } on FirebaseAuthException catch (e) {
+      // Show Firebase error messages
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'Registration failed!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void showErrorSnackbar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text('Passwords don\'t match. Please try again', style: TextStyle(color: Colors.white, fontSize: 18),),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+      )
     );
   }
 
@@ -75,6 +119,51 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 Text('Sign Up', style: TextStyle(fontSize: 30, color: Colors.grey[700], fontWeight: FontWeight.w700), ),
                 SizedBox(height: 45,),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[200]
+                  ),
+                  child: TextField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                        hintText: ' First Name',
+                        border: InputBorder.none
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10,),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[200]
+                  ),
+                  child: TextField(
+                    controller: _lastNameController,
+                    decoration: InputDecoration(
+                        hintText: ' Last Name',
+                        border: InputBorder.none
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10,),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[200]
+                  ),
+                  child: TextField(
+                    controller: _ageController,
+                    decoration: InputDecoration(
+                        hintText: ' Age',
+                        border: InputBorder.none
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10,),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
@@ -137,10 +226,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('If you have account?  ', style: TextStyle(fontSize: 16),),
+                    Text('If you have account?  ', style: TextStyle(fontSize: 18),),
                     GestureDetector(
                         onTap: widget.navigateLoginPage,
-                        child: Text('Log In!', style: TextStyle(color: Colors.blue,fontSize: 16),))
+                        child: Text('Log In!', style: TextStyle(color: Colors.blue,fontSize: 18, fontWeight: FontWeight.w700),))
                   ],
                 )
               ],

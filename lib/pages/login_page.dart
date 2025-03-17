@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebasetutorial/pages/reset_password.dart';
 import 'package:flutter/material.dart';
 
 
@@ -29,6 +30,9 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void navigateToPasswordReset () {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ResetPasswordPage()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +58,8 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       hintText: ' Email',
-                      border: InputBorder.none
+                      border: InputBorder.none,
+
                     ),
                   ),
                 ),
@@ -74,7 +79,16 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 25,),
+                SizedBox(height: 10,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                        onTap: navigateToPasswordReset,
+                        child: Text('Forgot password?', style: TextStyle(color: Colors.blue,fontSize: 16, fontWeight: FontWeight.w700), ))
+                  ],
+                ),
+                SizedBox(height: 20,),
                 GestureDetector(
                   onTap: logIn,
                   child: Container(
@@ -93,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text('Not a member?  ', style: TextStyle(fontSize: 16),),
                     GestureDetector(
                         onTap: widget.navigateRegisterPage,
-                        child: Text('Register now!', style: TextStyle(color: Colors.blue,fontSize: 16),)
+                        child: Text('Register now!', style: TextStyle(color: Colors.blue,fontSize: 16, fontWeight: FontWeight.w700),)
                     )
                   ],
                 )
